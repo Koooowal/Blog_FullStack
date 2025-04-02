@@ -7,12 +7,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import moment from 'moment'
 
 function Write() {
-  const state= useLocation().state;
+  const state = useLocation().state;
   
-  const [value, setValue] = useState(state?.title || "");
-  const [title, setTitle] = useState(state?.desc || "");
+  const [title, setTitle] = useState(state?.title || "");
+  const [value, setValue] = useState(state?.desc || "");
   const [file, setFile] = useState(null);
   const [category, setCategory] = useState(state?.category || '')
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const upload = async (file) => {
@@ -32,35 +33,50 @@ function Write() {
       return res.data;
     } catch (error) {
       console.error("File upload failed:", error);
+      setError("File upload failed. Please try again.");
       return null;
     }
   };
   
-
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const imgUrl = file ? await upload(file) : null;
+    e.preventDefault();
+    setError(null);
+    
     try {
-      state ? await apiRequest.put(`/api/posts/${state.id}`, {
-        title,
-        desc: value,
-        category,
-        img: file ? imgUrl : null
-      }) : await apiRequest.post('/api/posts', {
-        title,
-        desc: value,
-        category,
-        img: file ? imgUrl : null,
-        date: moment(Date.now()).format('YYYY-MM-DD HH:mm:ss')
-      });
+      let imgUrl = null;
+      if (file) {
+        imgUrl = await upload(file);
+        if (!imgUrl && file) {
+          return; // Stop if file upload failed
+        }
+      }
+      
+      if (state) {
+        await apiRequest.put(`/api/posts/${state.id}`, {
+          title,
+          desc: value,
+          category,
+          img: imgUrl
+        });
+      } else {
+        await apiRequest.post('/api/posts', {
+          title,
+          desc: value,
+          category,
+          img: imgUrl,
+          date: moment(Date.now()).format('YYYY-MM-DD HH:mm:ss')
+        });
+      }
       navigate('/');
     } catch (error) {
-      console.log(error)
+      console.error("Post submission error:", error);
+      setError(error.response?.data || "Failed to submit post. Please try again.");
     }
   }
 
   return (
     <div className='add'>
+      {error && <div className="error-message" style={{color: 'red', padding: '10px'}}>{error}</div>}
       <div className="content">
         <input type="text" value={title} placeholder='Title' onChange={e=>setTitle(e.target.value)}/>
         <div className="edit">
@@ -81,7 +97,7 @@ function Write() {
           <label className='file' htmlFor="file">Upload Image</label>
           <div className="buttons">
             <button>Save as a draft</button>
-            <button  onClick={handleSubmit}>Publish</button>
+            <button onClick={handleSubmit}>Publish</button>
           </div>
         </div>
         <div className="item">

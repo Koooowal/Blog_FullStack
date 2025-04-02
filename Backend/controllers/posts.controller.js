@@ -27,40 +27,62 @@ export const getPost = (req, res) => {
 export const addPost = (req, res) => {
   const token = req.cookies.access_token;
   if (!token) {
-    console.log("Brak tokena użytkownika.");
+    console.log("No user token found");
     return res.status(401).json("Not authenticated!");
   }
   
-  jwt.verify(token, process.env.JWT_SECRET, (err, userInfo) => {
-    if (err) {
-      console.log("Błąd weryfikacji tokena:", err);
-      return res.status(403).json("Token is not valid!");
-    }
-
-    console.log("Dane użytkownika:", userInfo);
-
-    const q = "INSERT INTO posts(`title`, `desc`, `img`, `date`, `uid`, `category`) VALUES (?)";
-    const values = [
-      req.body.title,
-      req.body.desc,
-      req.body.img,
-      req.body.date,
-      userInfo.id,
-      req.body.category
-    ];
-
-    console.log("Dane do zapytania:", values);
-
-    db.query(q, [values], (err, data) => {
+  try {
+    jwt.verify(token, process.env.JWT_SECRET, (err, userInfo) => {
       if (err) {
-        console.error("Błąd podczas zapisu do bazy danych:", err);
-        return res.status(500).json(err);
+        console.log("Token verification error:", err);
+        return res.status(403).json("Token is not valid!");
       }
 
-      console.log("Post został zapisany:", data);
-      return res.json("Post has been created.");
+      console.log("User data:", userInfo);
+      
+      if (!userInfo || !userInfo.id) {
+        console.log("Missing user ID in token");
+        return res.status(400).json("Invalid user information");
+      }
+
+      const q = "INSERT INTO posts(title, `desc`, img, date, uid, category) VALUES (?)";
+      
+      // Check if required fields exist
+      if (!req.body.title || !req.body.desc) {
+        return res.status(400).json("Title and description are required");
+      }
+      
+      const values = [
+        req.body.title,
+        req.body.desc,
+        req.body.img || null,
+        req.body.date,
+        userInfo.id,
+        req.body.category || "uncategorized"
+      ];
+
+      console.log("Query data:", values);
+
+      db.query(q, [values], (err, data) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({
+            message: "Database error while creating post",
+            error: err.message
+          });
+        }
+
+        console.log("Post saved successfully:", data);
+        return res.status(201).json("Post has been created.");
+      });
     });
-  });
+  } catch (error) {
+    console.error("Unexpected error in addPost:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
+  }
 }
 
 export const deletePost = (req, res) => {
