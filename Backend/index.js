@@ -8,6 +8,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+import ImageKit from 'imagekit';
 
 dotenv.config();
 
@@ -26,23 +27,40 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../Frontend/public/upload')); // ✅ Correct path
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+// Initialize ImageKit
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.VITE_URL_IK_ENDPOINT
 });
 
+// Configure multer for temporary file storage
+const storage = multer.memoryStorage(); // Store file in memory
 const upload = multer({ storage });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
+// ImageKit upload endpoint
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.status(200).json(req.file.filename);
+
+  try {
+    // Convert buffer to base64
+    const fileStr = req.file.buffer.toString('base64');
+    
+    // Upload to ImageKit
+    const result = await imagekit.upload({
+      file: fileStr,
+      fileName: `${Date.now()}-${req.file.originalname}`,
+      folder: '/blog-uploads/'
+    });
+
+    // Return the file URL for storage in the database
+    return res.status(200).json(result.url);
+  } catch (error) {
+    console.error('Error uploading to ImageKit:', error);
+    return res.status(500).json({ error: 'Failed to upload image' });
+  }
 });
 
 // Routes

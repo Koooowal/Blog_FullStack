@@ -14,6 +14,7 @@ function Write() {
   const [file, setFile] = useState(null);
   const [category, setCategory] = useState(state?.category || '')
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
   const upload = async (file) => {
@@ -23,24 +24,38 @@ function Write() {
     }
   
     try {
+      setUploading(true);
       const formData = new FormData();
       formData.append('file', file);
   
-      const res = await apiRequest.post('/upload', formData, {
+      const res = await apiRequest.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-  
+      
+      // ImageKit returns the URL directly
       return res.data;
     } catch (error) {
       console.error("File upload failed:", error);
       setError("File upload failed. Please try again.");
       return null;
+    } finally {
+      setUploading(false);
     }
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    
+    if (!value.trim()) {
+      setError("Content is required");
+      return;
+    }
     
     try {
       let imgUrl = null;
@@ -94,10 +109,15 @@ function Write() {
           <span><b>Status: </b>Draft</span>
           <span><b>Visibility: </b>Public</span>
           <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
-          <label className='file' htmlFor="file">Upload Image</label>
+          <label className='file' htmlFor="file">
+            {uploading ? 'Uploading...' : 'Upload Image'}
+          </label>
+          {file && <p style={{fontSize: '0.8rem', marginTop: '5px'}}>Selected: {file.name}</p>}
           <div className="buttons">
-            <button>Save as a draft</button>
-            <button onClick={handleSubmit}>Publish</button>
+            <button disabled={uploading}>Save as a draft</button>
+            <button onClick={handleSubmit} disabled={uploading}>
+              {uploading ? 'Uploading...' : 'Publish'}
+            </button>
           </div>
         </div>
         <div className="item">
