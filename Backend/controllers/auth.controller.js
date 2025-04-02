@@ -31,18 +31,21 @@ export const login = (req, res) => {
     if (err) return res.status(500).json(err);
     if (data.length === 0) return res.status(404).json("User not found!");
 
-    //Check password
+    // Check password
     const checkPassword = bcrypt.compareSync(req.body.password, data[0].password);
     if (!checkPassword) return res.status(400).json("Wrong password or username!");
 
     const { password, ...other } = data[0];
 
-    const token=jwt.sign({id:data[0].id},process.env.JWT_SECRET);
+    const token = jwt.sign({ id: data[0].id }, process.env.JWT_SECRET);
+
+    // Ensure the cookie is being set correctly
     res.cookie("access_token", token, {
       httpOnly: true,
+      secure: true,  // Make sure your app is running on HTTPS, if not, set to false
+      sameSite: "None" // This is important for cross-origin requests
     }).status(200).json(other);
   });
-  
 }
 
 export const logout = (req, res) => {

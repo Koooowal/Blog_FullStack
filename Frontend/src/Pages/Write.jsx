@@ -41,12 +41,12 @@ function Write() {
     e.preventDefault()
     const imgUrl = file ? await upload(file) : null;
     try {
-      state ? await apiRequest.put(`/posts/${state.id}`, {
+      state ? await apiRequest.put(`/api/posts/${state.id}`, {
         title,
         desc: value,
         category,
         img: file ? imgUrl : null
-      }) : await apiRequest.post('/posts', {
+      }) : await apiRequest.post('/api/posts', {
         title,
         desc: value,
         category,

@@ -19,7 +19,7 @@ function Single() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiRequest.get(`/posts/${postId}`);
+        const res = await apiRequest.get(`/api/posts/${postId}`);
         setPost(res.data);
       } catch (err) {
         console.log(err);
@@ -30,7 +30,7 @@ function Single() {
 
   const handleDelete = async () => {
     try {
-      await apiRequest.delete(`/posts/${postId}`);
+      await apiRequest.delete(`/api/posts/${postId}`);
       navigate('/');
     } catch (err) {
       console.log(err);

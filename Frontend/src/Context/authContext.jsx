@@ -7,12 +7,12 @@ export const AuthContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
 
   const login = async (inputs) => {
-    const res = await apiRequest.post('/auth/login', inputs);
+    const res = await apiRequest.post('/api/auth/login', inputs);
     setCurrentUser(res.data);
   }
 
   const logout = async (inputs) => {
-    await apiRequest.post('/auth/logout', inputs);
+    await apiRequest.post('/api/auth/logout', inputs);
     setCurrentUser(null);
   }
 

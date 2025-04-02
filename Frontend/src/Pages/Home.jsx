@@ -9,7 +9,7 @@ function Home() {
   useEffect(()=>{
     const fetchData = async () => {
       try {
-        const res = await apiRequest.get(`/posts${category}`)
+        const res = await apiRequest.get(`/api/posts${category}`)
         setPosts(res.data);
       } catch (error) {
         console.log(error);

@@ -22,7 +22,7 @@ function Register() {
     e.preventDefault()
     console.log("Submitting registration with data:", inputs);
     try {
-      await apiRequest.post('/auth/register', inputs);
+      await apiRequest.post('/api/auth/register', inputs);
       navigate('/login');
     } catch (error) {
       setErr(error.response.data);

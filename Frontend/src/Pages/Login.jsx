@@ -20,13 +20,15 @@ function Login() {
   }
 
   const handleSubmit = async e => {
-    e.preventDefault()
+    e.preventDefault();
     console.log("Submitting login with data:", inputs);
+  
     try {
-      await login(inputs);
-      navigate('/');
+      await login(inputs); // This sends the request to the backend and sets the cookie
+      navigate('/'); // Navigating after successful login
     } catch (error) {
-      setErr(error.response.data);
+      console.log('Error during login:', error);
+      setErr(error.response?.data || 'Unknown error');
     }
   }
 

@@ -9,7 +9,7 @@ function Menu({category}) {
   useEffect(()=>{
     const fetchData = async () => {
       try {
-        const res = await apiRequest.get(`/posts/?cat=${category}`)
+        const res = await apiRequest.get(`/api/posts/?cat=${category}`)
         setPosts(res.data);
       } catch (error) {
         console.log(err);
