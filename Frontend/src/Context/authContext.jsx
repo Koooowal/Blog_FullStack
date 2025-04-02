@@ -6,19 +6,23 @@ export const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
 
-  const login = async (user) => {
+  const login = async (inputs) => {
     const res = await apiRequest.post('/auth/login', inputs);
     setCurrentUser(res.data);
   }
 
-  const logout = async (user) => {
-    const res = await apiRequest.post('/auth/logout', inputs);
+  const logout = async (inputs) => {
+    await apiRequest.post('/auth/logout', inputs);
     setCurrentUser(null);
   }
 
   useEffect(() => {
-    localStorage.setItem("user", JSON.stringify(currentUser));
-  },[currentUser])
+    if (currentUser) {
+      localStorage.setItem("user", JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem("user");
+    }
+  }, [currentUser])
 
   return (
     <AuthContext.Provider value={{ currentUser, login, logout }}>

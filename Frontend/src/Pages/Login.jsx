@@ -21,7 +21,7 @@ function Login() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    console.log("Submitting registration with data:", inputs);
+    console.log("Submitting login with data:", inputs);
     try {
       await login(inputs);
       navigate('/');
@@ -36,8 +36,8 @@ function Login() {
       <form action="">
         <input type="text" placeholder='Username' required name='username' onChange={handleChange}/>
         <input type="password" placeholder='Password' required name='password' onChange={handleChange}/>
-        <button type='submit' onSubmit={handleSubmit}>Login</button>
-        {err & <p>This is an error</p>}
+        <button type='submit' onClick={handleSubmit}>Login</button>
+        {err && <p>This is an error</p>}
         <span>Don't have an account? <Link to='/register'>Register</Link></span>
       </form>
     </div>

@@ -2,17 +2,74 @@ import React from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useState } from 'react'
-
+import apiRequest from '../Utility/apiRequest'
+import { useLocation, useNavigate } from 'react-router-dom'
+import moment from 'moment'
 
 function Write() {
-  const [value, setValue] = useState('')
+  const state= useLocation().state;
+  
+  const [value, setValue] = useState(state?.title || "");
+  const [title, setTitle] = useState(state?.desc || "");
+  const [file, setFile] = useState(null);
+  const [category, setCategory] = useState(state?.category || '')
+  const navigate = useNavigate();
+
+  const upload = async (file) => {
+    if (!file) {
+      console.error("No file selected for upload.");
+      return null;
+    }
+  
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+  
+      const res = await apiRequest.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+  
+      return res.data;
+    } catch (error) {
+      console.error("File upload failed:", error);
+      return null;
+    }
+  };
+  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const imgUrl = file ? await upload(file) : null;
+    try {
+      state ? await apiRequest.put(`/posts/${state.id}`, {
+        title,
+        desc: value,
+        category,
+        img: file ? imgUrl : null
+      }) : await apiRequest.post('/posts', {
+        title,
+        desc: value,
+        category,
+        img: file ? imgUrl : null,
+        date: moment(Date.now()).format('YYYY-MM-DD HH:mm:ss')
+      });
+      navigate('/');
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <div className='add'>
       <div className="content">
-        <input type="text" placeholder='Title'/>
+        <input type="text" value={title} placeholder='Title' onChange={e=>setTitle(e.target.value)}/>
         <div className="edit">
-          <ReactQuill className='editor' theme='snow' placeholder='Tell your story...' value={value} onChange={setValue} />
+          <ReactQuill
+            className="editor"
+            theme="snow"
+            value={value}
+            onChange={setValue}
+          />
         </div>
       </div>
       <div className="menu">
@@ -20,41 +77,37 @@ function Write() {
           <h1>Publish</h1>
           <span><b>Status: </b>Draft</span>
           <span><b>Visibility: </b>Public</span>
-          <input type="file" id="file" style={{display:'none'}}/>
+          <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
           <label className='file' htmlFor="file">Upload Image</label>
           <div className="buttons">
             <button>Save as a draft</button>
-            <button>Update</button>
+            <button  onClick={handleSubmit}>Publish</button>
           </div>
         </div>
         <div className="item">
           <h1>Category</h1>
           <div className="cat">
-          <input type="radio" name='cat' value='art' id='art'/>
+          <input type="radio" name='cat' checked={category==='art'} value='art' id='art' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="art">Art</label>
           </div>
           <div className="cat">
-          <input type="radio" name='cat' value='science' id='science'/>
+          <input type="radio" name='cat' checked={category==='science'} value='science' id='science' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="science">Science</label>
           </div>
           <div className="cat">
-          <input type="radio" name='cat' value='technology' id='technology'/>
+          <input type="radio" name='cat' checked={category==='technology'} value='technology' id='technology' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="technology">Technology</label>
           </div>
           <div className="cat">
-          <input type="radio" name='cat' value='technology' id='technology'/>
-          <label htmlFor="technology">Technology</label>
-          </div>
-          <div className="cat">
-          <input type="radio" name='cat' value='cinema' id='cinema'/>
+          <input type="radio" name='cat' checked={category==='cinema'} value='cinema' id='cinema' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="cinema">Cinema</label>
           </div>
           <div className="cat">
-          <input type="radio" name='cat' value='design' id='design'/>
+          <input type="radio" name='cat' checked={category==='design'} value='design' id='design' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="design">Design</label>
           </div>
           <div className="cat">
-          <input type="radio" name='cat' value='food' id='food'/>
+          <input type="radio" name='cat' checked={category==='food'} value='food' id='food' onChange={e=>setCategory(e.target.value)}/>
           <label htmlFor="food">Food</label>
           </div>
         </div>
