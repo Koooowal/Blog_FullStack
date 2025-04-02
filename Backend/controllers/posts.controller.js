@@ -45,27 +45,23 @@ export const addPost = (req, res) => {
         return res.status(400).json("Invalid user information");
       }
 
-      // Validate input data
+      const q = "INSERT INTO posts(title, `desc`, img, date, uid, category) VALUES (?)";
+      
+      // Check if required fields exist
       if (!req.body.title || !req.body.desc) {
         return res.status(400).json("Title and description are required");
       }
       
-      const q = "INSERT INTO posts(title, `desc`, img, date, uid, category) VALUES (?)";
-      
       const values = [
         req.body.title,
         req.body.desc,
-        req.body.img || null, // This will now store the ImageKit URL
+        req.body.img || null,
         req.body.date,
         userInfo.id,
         req.body.category || "uncategorized"
       ];
 
-      console.log("Creating post with data:", {
-        title: req.body.title,
-        category: req.body.category,
-        imageUrl: req.body.img ? "Provided" : "None"
-      });
+      console.log("Query data:", values);
 
       db.query(q, [values], (err, data) => {
         if (err) {
