@@ -8,11 +8,19 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+import ImageKit from 'imagekit';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize ImageKit
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
 
 const app = express();
 
@@ -27,23 +35,37 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../Frontend/public/upload')); // ✅ Correct path
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
+// Configure multer for memory storage (not disk)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
+// ImageKit upload endpoint
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.status(200).json(req.file.filename);
+
+  try {
+    // Generate a unique file name
+    const fileName = `${Date.now()}-${req.file.originalname.replace(/\s/g, '_')}`;
+    
+    // Convert buffer to base64
+    const fileBuffer = req.file.buffer;
+    const fileBase64 = fileBuffer.toString('base64');
+    
+    // Upload to ImageKit
+    const uploadResponse = await imagekit.upload({
+      file: fileBase64,
+      fileName: fileName,
+      folder: '/blog-posts'
+    });
+    
+    // Return the ImageKit file path to be stored in the database
+    res.status(200).json(uploadResponse.filePath);
+  } catch (error) {
+    console.error('ImageKit upload error:', error);
+    res.status(500).json({ error: 'Failed to upload to ImageKit' });
+  }
 });
 
 // Routes

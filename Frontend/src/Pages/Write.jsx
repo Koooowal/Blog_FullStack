@@ -14,6 +14,7 @@ function Write() {
   const [file, setFile] = useState(null);
   const [category, setCategory] = useState(state?.category || '')
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
   const upload = async (file) => {
@@ -23,15 +24,18 @@ function Write() {
     }
   
     try {
+      setUploading(true);
       const formData = new FormData();
       formData.append('file', file);
   
-      const res = await apiRequest.post('/upload', formData, {
+      const res = await apiRequest.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
   
+      setUploading(false);
       return res.data;
     } catch (error) {
+      setUploading(false);
       console.error("File upload failed:", error);
       setError("File upload failed. Please try again.");
       return null;
@@ -43,10 +47,10 @@ function Write() {
     setError(null);
     
     try {
-      let imgUrl = null;
+      let imgPath = state?.img || null;
       if (file) {
-        imgUrl = await upload(file);
-        if (!imgUrl && file) {
+        imgPath = await upload(file);
+        if (!imgPath && file) {
           return; // Stop if file upload failed
         }
       }
@@ -56,14 +60,14 @@ function Write() {
           title,
           desc: value,
           category,
-          img: imgUrl
+          img: imgPath
         });
       } else {
         await apiRequest.post('/api/posts', {
           title,
           desc: value,
           category,
-          img: imgUrl,
+          img: imgPath,
           date: moment(Date.now()).format('YYYY-MM-DD HH:mm:ss')
         });
       }
@@ -95,9 +99,10 @@ function Write() {
           <span><b>Visibility: </b>Public</span>
           <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
           <label className='file' htmlFor="file">Upload Image</label>
+          {uploading && <span>Uploading...</span>}
           <div className="buttons">
             <button>Save as a draft</button>
-            <button onClick={handleSubmit}>Publish</button>
+            <button onClick={handleSubmit} disabled={uploading}>Publish</button>
           </div>
         </div>
         <div className="item">
