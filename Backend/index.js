@@ -17,7 +17,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: [process.env.CLIENT_URL, 'https://fullstack-blog-frontend-l25e.onrender.com'],
+  // or use a conditional: process.env.NODE_ENV === 'production' ? 'https://fullstack-blog-frontend-l25e.onrender.com' : process.env.CLIENT_URL
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
